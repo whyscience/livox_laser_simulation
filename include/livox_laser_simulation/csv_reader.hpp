@@ -11,8 +11,8 @@
 #include <vector>
 
 class CsvReader {
- public:
-    static bool ReadCsvFile(std::string file_name, std::vector<std::vector<double>>& datas) {
+public:
+    static bool ReadCsvFile(std::string file_name, std::vector<std::vector<double>> &datas) {
         std::fstream file_stream;
         file_stream.open(file_name, std::ios::in);
         if (file_stream.is_open()) {

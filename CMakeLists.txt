@@ -5,8 +5,8 @@ project(livox_laser_simulation)
 add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  tf
+        roscpp
+        tf
 )
 
 find_package(gazebo REQUIRED)
@@ -22,7 +22,7 @@ link_directories(${GAZEBO_LIBRARY_DIRS})
 #link_directories(/home/lfc/proto/lib/)
 
 include_directories(
-         include
+        include
         ${catkin_INCLUDE_DIRS}
 )
 
