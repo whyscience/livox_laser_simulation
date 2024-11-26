@@ -22,8 +22,8 @@ namespace pcl {
         float z;            /**< z             */
 
         float intensity; /**< intensity   */
-        uint8_t tag;        /**< Livox point tag   */
-        uint8_t line;       /**< Laser line id     */
+        std::uint8_t tag;        /**< Livox point tag   */
+        std::uint8_t line;       /**< Laser line id     */
         double timestamp; /**< Timestamp         */
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         EIGEN_ALIGN16;
@@ -36,8 +36,8 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (LivoxPointXyzrtlt,
 (float, y, y)
 (float, z, z)
 (float, intensity, intensity)
-(uint8_t, tag, tag)
-(uint8_t, line, line)
+(std::uint8_t, tag, tag)
+(std::uint8_t, line, line)
 (double, timestamp, timestamp)
 )
 
