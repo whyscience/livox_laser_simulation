@@ -15,7 +15,9 @@ namespace gazebo {
         double time;
         double azimuth;
         double zenith;
+        uint8_t line;
     };
+
 
     class LivoxPointsPlugin : public RayPlugin {
     public:
@@ -30,35 +32,51 @@ namespace gazebo {
 
         ignition::math::Angle AngleMax() const;
 
-        double GetAngleResolution() const GAZEBO_DEPRECATED(7.0);
+        double GetAngleResolution() const
+
+        GAZEBO_DEPRECATED(7.0);
 
         double AngleResolution() const;
 
-        double GetRangeMin() const GAZEBO_DEPRECATED(7.0);
+        double GetRangeMin() const
+
+        GAZEBO_DEPRECATED(7.0);
 
         double RangeMin() const;
 
-        double GetRangeMax() const GAZEBO_DEPRECATED(7.0);
+        double GetRangeMax() const
+
+        GAZEBO_DEPRECATED(7.0);
 
         double RangeMax() const;
 
-        double GetRangeResolution() const GAZEBO_DEPRECATED(7.0);
+        double GetRangeResolution() const
+
+        GAZEBO_DEPRECATED(7.0);
 
         double RangeResolution() const;
 
-        int GetRayCount() const GAZEBO_DEPRECATED(7.0);
+        int GetRayCount() const
+
+        GAZEBO_DEPRECATED(7.0);
 
         int RayCount() const;
 
-        int GetRangeCount() const GAZEBO_DEPRECATED(7.0);
+        int GetRangeCount() const
+
+        GAZEBO_DEPRECATED(7.0);
 
         int RangeCount() const;
 
-        int GetVerticalRayCount() const GAZEBO_DEPRECATED(7.0);
+        int GetVerticalRayCount() const
+
+        GAZEBO_DEPRECATED(7.0);
 
         int VerticalRayCount() const;
 
-        int GetVerticalRangeCount() const GAZEBO_DEPRECATED(7.0);
+        int GetVerticalRangeCount() const
+
+        GAZEBO_DEPRECATED(7.0);
 
         int VerticalRangeCount() const;
 
@@ -66,7 +84,9 @@ namespace gazebo {
 
         ignition::math::Angle VerticalAngleMax() const;
 
-        double GetVerticalAngleResolution() const GAZEBO_DEPRECATED(7.0);
+        double GetVerticalAngleResolution() const
+
+        GAZEBO_DEPRECATED(7.0);
 
         double VerticalAngleResolution() const;
 
@@ -74,6 +94,13 @@ namespace gazebo {
         virtual void OnNewLaserScans();
 
     private:
+        enum PointCloudType {
+            SENSOR_MSG_POINT_CLOUD = 0,
+            SENSOR_MSG_POINT_CLOUD2_POINTXYZ = 1,
+            SENSOR_MSG_POINT_CLOUD2_LIVOXPOINTXYZRTLT = 2,
+            livox_laser_simulation_CUSTOM_MSG = 3,
+        };
+
         void InitializeRays(std::vector<std::pair<int, AviaRotateInfo>> &points_pair,
                             boost::shared_ptr<physics::LivoxOdeMultiRayShape> &ray_shape);
 
@@ -81,6 +108,14 @@ namespace gazebo {
 
         void
         SendRosTf(const ignition::math::Pose3d &pose, const std::string &father_frame, const std::string &child_frame);
+
+        void PublishPointCloud(std::vector<std::pair<int, AviaRotateInfo>> &points_pair);
+
+        void PublishPointCloud2XYZ(std::vector<std::pair<int, AviaRotateInfo>> &points_pair);
+
+        void PublishLivoxROSDriverCustomMsg(std::vector<std::pair<int, AviaRotateInfo>> &points_pair);
+
+        void PublishPointCloud2XYZRTLT(std::vector<std::pair<int, AviaRotateInfo>> &points_pair);
 
         boost::shared_ptr<physics::LivoxOdeMultiRayShape> rayShape;
         gazebo::physics::CollisionPtr laserCollision;
@@ -100,9 +135,14 @@ namespace gazebo {
         int64_t currStartIndex = 0;
         int64_t maxPointSize = 1000;
         int64_t downSample = 1;
+        uint16_t publishPointCloudType;
+        bool visualize = false;
+        std::string frameName = "livox";
 
         double maxDist = 400.0;
         double minDist = 0.1;
+
+        bool useInf = true;
     };
 
 }  // namespace gazebo
