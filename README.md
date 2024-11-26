@@ -4,9 +4,9 @@ A package to provide plug-in for [Livox Series LiDAR](https://www.livoxtech.com)
 
 ## Requirements
 
-- ROS(=Melodic)
-- Gazebo (= 9.x, http://gazebosim.org/)
-- Ubuntu(=18.04)
+- ROS(=Noetic)
+- Gazebo (= 11.x, http://gazebosim.org/)
+- Ubuntu(=20.04)
 
 ## Results
 
@@ -67,3 +67,5 @@ We can choose the lidar model by selecting different CSV file in scan_mode dir f
 - downsample: 1 // we can increment this para to decrease the consumption
 
 ### Thanks to LvFengchi and CaoMing(https://github.com/EpsAvlc) for the help of this repository！
+
+/opt/ros/noetic/lib/xacro/xacro /home/eric/CODE/livox_laser_simulation/urdf/livox_mid360.xacro
