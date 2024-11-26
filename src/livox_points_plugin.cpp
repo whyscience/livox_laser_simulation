@@ -4,13 +4,17 @@
 
 #include "livox_laser_simulation/livox_points_plugin.h"
 #include <ros/ros.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/PointCloud.h>
+#include <ignition/math/Vector3.hh>
 #include <gazebo/physics/Model.hh>
 #include <gazebo/physics/MultiRayShape.hh>
 #include <gazebo/physics/PhysicsEngine.hh>
 #include <gazebo/physics/World.hh>
 #include <gazebo/sensors/RaySensor.hh>
 #include <gazebo/transport/Node.hh>
+#include <ignition/math/Vector3.hh>
+#include <limits>
 #include "livox_laser_simulation/csv_reader.hpp"
 #include "livox_laser_simulation/livox_ode_multiray_shape.h"
 
@@ -41,6 +45,11 @@ namespace gazebo {
     void LivoxPointsPlugin::Load(gazebo::sensors::SensorPtr _parent, sdf::ElementPtr sdf) {
         std::vector<std::vector<double>> datas;
         std::string file_name = sdf->Get<std::string>("csv_file_name");
+
+        std::string filePath(__FILE__);
+        size_t found = filePath.find_last_of("/\\");
+        file_name = std::string(filePath.substr(0, found)) + "/../scan_mode/" + file_name;
+
         ROS_INFO_STREAM("load csv file name:" << file_name);
         if (!CsvReader::ReadCsvFile(file_name, datas)) {
             ROS_INFO_STREAM("cannot get csv file!" << file_name << "will return !");
@@ -102,7 +111,7 @@ namespace gazebo {
             ignition::math::Quaterniond ray;
             ray.Euler(ignition::math::Vector3d(0.0, rotate_info.zenith, rotate_info.azimuth));
             auto axis = offset.Rot() * ray * ignition::math::Vector3d(1.0, 0.0, 0.0);
-            start_point = minDist * axis + offset.Pos();
+            start_point = minDist * axis + offset.Pos() - minDist * axis;
             end_point = maxDist * axis + offset.Pos();
             rayShape->AddRay(start_point, end_point);
         }
@@ -185,13 +194,14 @@ namespace gazebo {
         int64_t end_index = currStartIndex + samplesStep;
         int ray_index = 0;
         auto ray_size = rays.size();
+        //points_pair.clear();
         points_pair.reserve(rays.size());
         for (int k = currStartIndex; k < end_index; k += downSample) {
             auto index = k % maxPointSize;
             auto &rotate_info = aviaInfos[index];
             ray.Euler(ignition::math::Vector3d(0.0, rotate_info.zenith, rotate_info.azimuth));
             auto axis = offset.Rot() * ray * ignition::math::Vector3d(1.0, 0.0, 0.0);
-            start_point = minDist * axis + offset.Pos();
+            start_point = minDist * axis + offset.Pos() - minDist * axis;
             end_point = maxDist * axis + offset.Pos();
             if (ray_index < ray_size) {
                 rays[ray_index]->SetPoints(start_point, end_point);
@@ -200,6 +210,9 @@ namespace gazebo {
             ray_index++;
         }
         currStartIndex += samplesStep;
+        if (currStartIndex > maxPointSize) {
+            currStartIndex -= maxPointSize;
+        }
     }
 
     void LivoxPointsPlugin::InitializeScan(msgs::LaserScan *&scan) {

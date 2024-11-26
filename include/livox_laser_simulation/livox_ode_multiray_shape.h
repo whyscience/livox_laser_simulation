@@ -5,10 +5,10 @@
 #ifndef SRC_GAZEBO_LIVOX_ODE_MULTIRAY_SHAPE_H
 #define SRC_GAZEBO_LIVOX_ODE_MULTIRAY_SHAPE_H
 
+#include <ignition/math/Vector3.hh>
 #include <gazebo/physics/MultiRayShape.hh>
 #include <gazebo/util/system.hh>
 #include <gazebo/ode/common.h>
-#include <ignition/math4/ignition/math.hh>
 
 namespace gazebo {
     namespace physics {
@@ -43,8 +43,10 @@ namespace gazebo {
             /// \param[in] _start Start of a ray.
             /// \param[in] _end End of a ray.
         public:
-            void AddRay(const ignition::math::Vector3d &_start,
-                        const ignition::math::Vector3d &_end);
+
+            void AddRay(const ignition::math::Vector3<double> &_start,
+                        const ignition::math::Vector3<double> &_end);
+
             /// \brief Space to contain the ray space, for efficiency.
         private:
             dSpaceID superSpaceId;

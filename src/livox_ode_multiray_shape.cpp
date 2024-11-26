@@ -2,6 +2,7 @@
 // Created by lfc on 2021/2/28.
 //
 
+#include <ignition/math/Vector3.hh>
 #include <gazebo/common/Assert.hh>
 #include <gazebo/common/Exception.hh>
 #include <gazebo/physics/World.hh>
@@ -12,14 +13,15 @@
 #include <gazebo/physics/ode/ODERayShape.hh>
 #include <gazebo/physics/ode/ODEMultiRayShape.hh>
 #include "livox_laser_simulation/livox_ode_multiray_shape.h"
-#include <ignition/math4/ignition/math.hh>
 
 using namespace gazebo;
 using namespace physics;
 
 //////////////////////////////////////////////////
-LivoxOdeMultiRayShape::LivoxOdeMultiRayShape(CollisionPtr _parent)
-        : MultiRayShape(_parent) {
+LivoxOdeMultiRayShape::LivoxOdeMultiRayShape(CollisionPtr
+                                             _parent)
+        :
+        MultiRayShape(_parent) {
     this->SetName("ODE Multiray Shape");
 
     // Create a space to contain the ray space
@@ -151,8 +153,8 @@ void LivoxOdeMultiRayShape::UpdateCallback(void *_data, dGeomID _o1, dGeomID _o2
 }
 
 //////////////////////////////////////////////////
-void LivoxOdeMultiRayShape::AddRay(const ignition::math::Vector3d &_start,
-                                   const ignition::math::Vector3d &_end) {
+void LivoxOdeMultiRayShape::AddRay(const ignition::math::Vector3<double> &_start,
+                                   const ignition::math::Vector3<double> &_end) {
     MultiRayShape::AddRay(_start, _end);
 
     ODECollisionPtr odeCollision(new ODECollision(
@@ -168,9 +170,9 @@ void LivoxOdeMultiRayShape::AddRay(const ignition::math::Vector3d &_start,
 }
 
 void LivoxOdeMultiRayShape::Init() {
-    ignition::math::Vector3d start, end, axis;
+    ignition::math::Vector3<double> start, end, axis;
     double yawAngle, pitchAngle;
-    // ignition::math::Quaternion ray;
+    ignition::math::Quaternion<double> ray;
     double yDiff;
     double horzMinAngle, horzMaxAngle;
     int horzSamples = 1;
@@ -221,8 +223,8 @@ void LivoxOdeMultiRayShape::Init() {
 //
 //            // since we're rotating a unit x vector, a pitch rotation will now be
 //            // around the negative y axis
-//            ray.SetFromEuler(math::Vector3(0.0, -pitchAngle, yawAngle));
-//            axis = this->offset.rot * ray * math::Vector3(1.0, 0.0, 0.0);
+//            ray.SetFromEuler(ignition::math::Vector3(0.0, -pitchAngle, yawAngle));
+//            axis = this->offset.rot * ray * ignition::math::Vector3(1.0, 0.0, 0.0);
 //
 //            start = (axis * minRange) + this->offset.pos;
 //            end = (axis * maxRange) + this->offset.pos;
