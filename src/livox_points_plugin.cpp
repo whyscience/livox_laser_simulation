@@ -51,9 +51,12 @@ namespace gazebo {
         std::vector<std::vector<double>> datas;
         std::string file_name = sdf->Get<std::string>("csv_file_name");
 
-        std::string filePath(__FILE__);
-        size_t found = filePath.find_last_of("/\\");
-        file_name = std::string(filePath.substr(0, found)) + "/../scan_mode/" + file_name;
+        // if /home/ not in the file name, then add the path to the file
+        if (file_name.find("/home/") == std::string::npos) {
+            std::string filePath(__FILE__);
+            size_t found = filePath.find_last_of("/\\");
+            file_name = std::string(filePath.substr(0, found)) + "/../scan_mode/" + file_name;
+        }
 
         ROS_INFO_STREAM("load csv file name:" << file_name);
         if (!CsvReader::ReadCsvFile(file_name, datas)) {
