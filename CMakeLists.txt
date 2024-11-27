@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.4.1)
 project(livox_laser_simulation)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
@@ -10,21 +10,13 @@ find_package(catkin REQUIRED COMPONENTS
         tf
         sensor_msgs
         std_msgs
-        message_generation
+        wa_ros_msgs
 )
 
 find_package(gazebo REQUIRED)
 find_package(PCL REQUIRED)
 include_directories(${GAZEBO_INCLUDE_DIRS})
-add_message_files(FILES
-        CustomPoint.msg
-        CustomMsg.msg
-        #   Message2.msg
-)
 
-generate_messages(DEPENDENCIES
-        std_msgs
-)
 #To solve the error which gazebo does not handle the include file well, we must add this line.
 include_directories(/usr/include/)
 
@@ -49,4 +41,4 @@ catkin_package(
 add_library(livox_laser_simulation SHARED src/livox_points_plugin.cpp src/livox_ode_multiray_shape.cpp)
 target_link_libraries(livox_laser_simulation ${catkin_LIBRARIES} RayPlugin)
 
-target_link_libraries(livox_laser_simulation libprotobuf.so.9)
+#target_link_libraries(livox_laser_simulation libprotobuf.so.17)

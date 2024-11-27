@@ -31,15 +31,15 @@ public:
                         data.push_back(std::stod(value));
                     }
                 } catch (...) {
-                    std::cerr << "cannot convert str:" << line_str << "\n";
+                    std::cerr << "cannot convert str: " << line_str << "\n";
                     continue;
                 }
                 datas.push_back(data);
             }
-            std::cerr << "data size:" << datas.size() << "\n";
+            std::cerr << "data size: " << datas.size() << "\n";
             return true;
         } else {
-            std::cerr << "cannot read csv file!" << file_name << "\n";
+            std::cerr << "cannot read csv file: " << file_name << "\n";
         }
         return false;
     }

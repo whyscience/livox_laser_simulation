@@ -18,10 +18,8 @@ using namespace gazebo;
 using namespace physics;
 
 //////////////////////////////////////////////////
-LivoxOdeMultiRayShape::LivoxOdeMultiRayShape(CollisionPtr
-                                             _parent)
-        :
-        MultiRayShape(_parent) {
+LivoxOdeMultiRayShape::LivoxOdeMultiRayShape(CollisionPtr _parent)
+        : MultiRayShape(_parent) {
     this->SetName("ODE Multiray Shape");
 
     // Create a space to contain the ray space

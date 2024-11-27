@@ -15,7 +15,7 @@
 #include <gazebo/sensors/RaySensor.hh>
 #include <gazebo/transport/Node.hh>
 #include <ignition/math/Vector3.hh>
-#include <livox_laser_simulation/CustomMsg.h>
+#include <wa_ros_msgs/LivoxCustomMsg.h>
 #include <limits>
 #include "livox_laser_simulation/csv_reader.hpp"
 #include "livox_laser_simulation/livox_ode_multiray_shape.h"
@@ -39,7 +39,7 @@ namespace gazebo {
                 avia_infos.emplace_back();
                 avia_infos.back().time = data[0];
                 avia_infos.back().azimuth = data[1] * deg_2_rad;
-                avia_infos.back().zenith = data[2] * deg_2_rad - M_PI_2;
+                avia_infos.back().zenith = data[2] * deg_2_rad - M_PI_2;  //转化成标准的右手系角度
                 avia_infos.back().line = i % 4;
             } else {
                 ROS_INFO_STREAM("data size is not 3!");
@@ -51,6 +51,7 @@ namespace gazebo {
         std::vector<std::vector<double>> datas;
         std::string file_name = sdf->Get<std::string>("csv_file_name");
 
+        // 为了方便直接使用sdf，不使用package的方式
         // if /home/ not in the file name, then add the path to the file
         if (file_name.find("/home/") == std::string::npos) {
             std::string filePath(__FILE__);
@@ -58,9 +59,9 @@ namespace gazebo {
             file_name = std::string(filePath.substr(0, found)) + "/../scan_mode/" + file_name;
         }
 
-        ROS_INFO_STREAM("load csv file name:" << file_name);
+        ROS_INFO_STREAM("load csv file name: " << file_name);
         if (!CsvReader::ReadCsvFile(file_name, datas)) {
-            ROS_INFO_STREAM("cannot get csv file!" << file_name << "will return !");
+            ROS_INFO_STREAM("cannot get csv file: " << file_name << ", will return !");
             return;
         }
 
@@ -73,7 +74,7 @@ namespace gazebo {
         char **argv = nullptr;
         auto curr_scan_topic = sdf->Get<std::string>("ros_topic");
         frameName = sdf->Get<std::string>("frameName");
-        ROS_INFO_STREAM("ros topic name:" << curr_scan_topic);
+        ROS_INFO_STREAM("ros topic name: " << curr_scan_topic);
         ROS_INFO_STREAM("ros frame id: " << frameName);
 
         raySensor = _parent;
@@ -83,9 +84,10 @@ namespace gazebo {
         node = transport::NodePtr(new transport::Node());
         node->Init(raySensor->WorldName());
         scanPub = node->Advertise<msgs::LaserScanStamped>(_parent->Topic(), 50);
+        ROS_INFO_STREAM("scan pub topic: " << scanPub->GetTopic());
         aviaInfos.clear();
         convertDataToRotateInfo(datas, aviaInfos);
-        ROS_INFO_STREAM("scan info size:" << aviaInfos.size());
+        ROS_INFO_STREAM("scan info size: " << aviaInfos.size());
         maxPointSize = aviaInfos.size();
 
         RayPlugin::Load(_parent, sdfPtr);
@@ -103,8 +105,8 @@ namespace gazebo {
         if (downSample < 1) {
             downSample = 1;
         }
-        ROS_INFO_STREAM("sample:" << samplesStep);
-        ROS_INFO_STREAM("downsample:" << downSample);
+        ROS_INFO_STREAM("sample: " << samplesStep);
+        ROS_INFO_STREAM("downsample: " << downSample);
 
         publishPointCloudType = sdfPtr->Get<int>("publish_pointcloud_type");
         ROS_INFO_STREAM("publish_pointcloud_type: " << publishPointCloudType);
@@ -119,13 +121,14 @@ namespace gazebo {
                 rosPointPub = rosNode->advertise<sensor_msgs::PointCloud2>(curr_scan_topic, 5);
                 break;
             case livox_laser_simulation_CUSTOM_MSG:
-                rosPointPub = rosNode->advertise<livox_laser_simulation::CustomMsg>(curr_scan_topic, 5);
+                rosPointPub = rosNode->advertise<wa_ros_msgs::LivoxCustomMsg>(curr_scan_topic, 5);
                 break;
             default:
                 break;
         }
 
         visualize = sdfPtr->Get<bool>("visualize");
+        ROS_INFO_STREAM("visualize: " << visualize);
 
         rayShape->RayShapes().reserve(samplesStep / downSample);
         rayShape->Load(sdfPtr);
@@ -161,7 +164,7 @@ namespace gazebo {
                 case SENSOR_MSG_POINT_CLOUD2_POINTXYZ:
                     PublishPointCloud2XYZ(points_pair);
                     break;
-                case SENSOR_MSG_POINT_CLOUD2_LIVOXPOINTXYZRTLT:
+                case SENSOR_MSG_POINT_CLOUD2_LIVOXPOINTXYZRTLT://default
                     PublishPointCloud2XYZRTLT(points_pair);
                     break;
                 case livox_laser_simulation_CUSTOM_MSG:
@@ -364,42 +367,54 @@ namespace gazebo {
 
         sensor_msgs::PointCloud scan_point;
         scan_point.header.stamp = ros::Time::now();
+        //scan_point.header.frame_id = raySensor->Name();
         scan_point.header.frame_id = frameName;
-        scan_point.header.frame_id = "livox";
         auto &scan_points = scan_point.points;
+
         for (auto &pair: points_pair) {
-            int verticle_index = roundf((pair.second.zenith - verticle_min) / verticle_incre);
-            int horizon_index = roundf((pair.second.azimuth - angle_min) / angle_incre);
-            if (verticle_index < 0 || horizon_index < 0) {
-                continue;
+            //int verticle_index = roundf((pair.second.zenith - verticle_min) / verticle_incre);
+            //int horizon_index = roundf((pair.second.azimuth - angle_min) / angle_incre);
+            // ！！！测试表明 不能continue 点云会缺少！！！
+            //if (verticle_index < 0 || horizon_index < 0) {
+            //   continue;
+            //}
+            // ！！！ 测试表明 这个if可以开启 ！！！
+            //if (verticle_index < verticalRayCount && horizon_index < rayCount) {
+            //auto index = (verticalRayCount - verticle_index - 1) * rayCount + horizon_index;
+            //auto intensity = rayShape->GetRetro(pair.first);
+            auto range = rayShape->GetRange(pair.first);
+            if (range >= maxDist || range <= minDist) {
+                range = 0.0;
             }
-            if (verticle_index < verticalRayCount && horizon_index < rayCount) {
-                auto index = (verticalRayCount - verticle_index - 1) * rayCount + horizon_index;
-                auto range = rayShape->GetRange(pair.first);
-                auto intensity = rayShape->GetRetro(pair.first);
-                if (range >= maxDist || range <= minDist || range <= 1e-5) {
-                    range = 0.0;
-                }
-                scan->set_ranges(index, range);
-                scan->set_intensities(index, intensity);
 
-                auto rotate_info = pair.second;
-                ignition::math::Quaterniond ray;
-                ray.Euler(ignition::math::Vector3d(0.0, rotate_info.zenith, rotate_info.azimuth));
+            // ！！！测试表明 不能设置 不然会报错！！！
+            //scan->set_ranges(index, range);
+            //scan->set_intensities(index, intensity);
 
-                auto axis = ray * ignition::math::Vector3d(1.0, 0.0, 0.0);
-                auto point = range * axis;
-                scan_points.emplace_back();
-                scan_points.back().x = point.X();
-                scan_points.back().y = point.Y();
-                scan_points.back().z = point.Z();
-            }
+            auto rotate_info = pair.second;
+            ignition::math::Quaterniond ray;
+            ray.Euler(ignition::math::Vector3d(0.0, rotate_info.zenith, rotate_info.azimuth));
+            //auto axis = rotate * ray * ignition::math::Vector3d(1.0, 0.0, 0.0);
+            //auto point = range * axis + world_pose.Pos();//转换成世界坐标系
+
+            auto axis = ray * ignition::math::Vector3d(1.0, 0.0, 0.0);
+            auto point = range * axis;
+            scan_points.emplace_back();
+            scan_points.back().x = point.X();
+            scan_points.back().y = point.Y();
+            scan_points.back().z = point.Z();
+            //} else {
+            //ROS_INFO_STREAM("count is wrong:" << verticle_index << "," << verticalRayCount << ","
+            //                                  << horizon_index << "," << rayCount << ","
+            //                                  << pair.second.zenith << "," << pair.second.azimuth);
+            //}
+        }
+        if (scanPub && scanPub->HasConnections() && visualize) {
+            scanPub->Publish(laserMsg);
+            ROS_INFO_ONCE("publish scan msg: %s", scanPub->GetTopic().c_str());
         }
         rosPointPub.publish(scan_point);
         ros::spinOnce();
-        if (scanPub && scanPub->HasConnections() && visualize) {
-            scanPub->Publish(laserMsg);
-        }
     }
 
     void LivoxPointsPlugin::PublishPointCloud2XYZ(std::vector<std::pair<int, AviaRotateInfo>> &points_pair) {
@@ -424,19 +439,19 @@ namespace gazebo {
             std::pair<int, gazebo::AviaRotateInfo> &pair = points_pair[i];
             int verticle_index = roundf((pair.second.zenith - verticle_min) / verticle_incre);
             int horizon_index = roundf((pair.second.azimuth - angle_min) / angle_incre);
-            if (verticle_index < 0 || horizon_index < 0) {
+            /*if (verticle_index < 0 || horizon_index < 0) {
                 continue;
-            }
+            }*/
             if (verticle_index < verticalRayCount && horizon_index < rayCount) {
                 auto index = (verticalRayCount - verticle_index - 1) * rayCount + horizon_index;
                 auto range = rayShape->GetRange(pair.first);
                 auto intensity = rayShape->GetRetro(pair.first);
-                if (range >= maxDist || range <= minDist || range <= 1e-5) {
+                if (range >= maxDist || range <= minDist) {
                     range = 0.0;
                 }
 
-                scan->set_ranges(index, range);
-                scan->set_intensities(index, intensity);
+                //scan->set_ranges(index, range);
+                //scan->set_intensities(index, intensity);
 
                 auto rotate_info = pair.second;
                 ignition::math::Quaterniond ray;
@@ -465,12 +480,13 @@ namespace gazebo {
         pcl::toROSMsg(pc, scan_point);
         scan_point.header.stamp = timestamp;
         scan_point.header.frame_id = frameName;
-        rosPointPub.publish(scan_point);
-        // SendRosTf(parentEntity->WorldPose(), world->Name(), raySensor->ParentName());
-        ros::spinOnce();
+
         if (scanPub && scanPub->HasConnections() && visualize) {
             scanPub->Publish(laserMsg);
         }
+        rosPointPub.publish(scan_point);
+        // SendRosTf(parentEntity->WorldPose(), world->Name(), raySensor->ParentName());
+        ros::spinOnce();
     }
 
     void LivoxPointsPlugin::PublishPointCloud2XYZRTLT(std::vector<std::pair<int, AviaRotateInfo>> &points_pair) {
@@ -498,24 +514,26 @@ namespace gazebo {
             std::pair<int, AviaRotateInfo> &pair = points_pair[i];
             int verticle_index = roundf((pair.second.zenith - verticle_min) / verticle_incre);
             int horizon_index = roundf((pair.second.azimuth - angle_min) / angle_incre);
-            if (verticle_index < 0 || horizon_index < 0) {
+            // ！！！测试表明 不能continue 点云会缺少！！！
+            /*if (verticle_index < 0 || horizon_index < 0) {
                 continue;
-            }
+            }*/
             if (verticle_index < verticalRayCount && horizon_index < rayCount) {
                 auto index = (verticalRayCount - verticle_index - 1) * rayCount + horizon_index;
                 auto range = rayShape->GetRange(pair.first);
                 auto intensity = rayShape->GetRetro(pair.first);
-                if (range >= maxDist || range <= minDist || abs(range) <= 1e-5) {
+                if (range >= maxDist || range <= minDist) {
                     range = 0.0;
                 }
-                scan->set_ranges(index, range);
-                scan->set_intensities(index, intensity);
+                //不要使用 [gazebo-1] process has died
+                //scan->set_ranges(index, range);
+                //scan->set_intensities(index, intensity);
 
                 auto rotate_info = pair.second;
                 ignition::math::Quaterniond ray;
                 ray.Euler(ignition::math::Vector3d(0.0, rotate_info.zenith, rotate_info.azimuth));
-                //                auto axis = rotate * ray * math::Vector3(1.0, 0.0, 0.0);
-                //                auto point = range * axis + world_pose.Pos();
+                //auto axis = rotate * ray * math::Vector3(1.0, 0.0, 0.0);
+                //auto point = range * axis + world_pose.Pos();
 
                 auto axis = ray * ignition::math::Vector3d(1.0, 0.0, 0.0);
                 auto point = range * axis;
@@ -535,11 +553,12 @@ namespace gazebo {
         pcl::toROSMsg(pc, scan_point);
         scan_point.header.stamp = header_timestamp;
         scan_point.header.frame_id = frameName;
-        rosPointPub.publish(scan_point);
-        ros::spinOnce();
+
         if (scanPub && scanPub->HasConnections() && visualize) {
             scanPub->Publish(laserMsg);
         }
+        rosPointPub.publish(scan_point);
+        ros::spinOnce();
     }
 
     void LivoxPointsPlugin::PublishLivoxROSDriverCustomMsg(std::vector<std::pair<int, AviaRotateInfo>> &points_pair) {
@@ -552,16 +571,15 @@ namespace gazebo {
 
         msgs::LaserScan *scan = laserMsg.mutable_scan();
         InitializeScan(scan);
-        // SendRosTf(parentEntity->WorldPose(), world->Name(), raySensor->ParentName());
+        //SendRosTf(parentEntity->WorldPose(), world->Name(), raySensor->ParentName());
 
         sensor_msgs::PointCloud2 scan_point;
 
-        livox_laser_simulation::CustomMsg msg;
-        // msg.header.frame_id = raySensor->ParentName();
-
+        // livox_laser_simulation::CustomMsg msg;
+        wa_ros_msgs::LivoxCustomMsg msg;
         msg.header.frame_id = frameName;
 
-        struct timespec tn;
+        struct timespec tn{};
         clock_gettime(CLOCK_REALTIME, &tn);
 
         msg.timebase = tn.tv_nsec;
@@ -571,18 +589,18 @@ namespace gazebo {
             std::pair<int, AviaRotateInfo> &pair = points_pair[i];
             int verticle_index = roundf((pair.second.zenith - verticle_min) / verticle_incre);
             int horizon_index = roundf((pair.second.azimuth - angle_min) / angle_incre);
-            if (verticle_index < 0 || horizon_index < 0) {
+            /*if (verticle_index < 0 || horizon_index < 0) {
                 continue;
-            }
+            }*/
             if (verticle_index < verticalRayCount && horizon_index < rayCount) {
                 auto index = (verticalRayCount - verticle_index - 1) * rayCount + horizon_index;
                 auto range = rayShape->GetRange(pair.first);
                 auto intensity = rayShape->GetRetro(pair.first);
-                if (range >= maxDist || range <= minDist || abs(range) <= 1e-5) {
+                if (range >= maxDist || range <= minDist) {
                     range = 0.0;
                 }
-                scan->set_ranges(index, range);
-                scan->set_intensities(index, intensity);
+                //scan->set_ranges(index, range);
+                //scan->set_intensities(index, intensity);
 
                 auto rotate_info = pair.second;
                 ignition::math::Quaterniond ray;
@@ -593,7 +611,8 @@ namespace gazebo {
                 auto axis = ray * ignition::math::Vector3d(1.0, 0.0, 0.0);
                 auto point = range * axis;
                 // pt.intensity = static_cast<float>(intensity);
-                livox_laser_simulation::CustomPoint pt;
+                // livox_laser_simulation::CustomPoint pt;
+                wa_ros_msgs::LivoxCustomPoint pt;
                 pt.x = point.X();
                 pt.y = point.Y();
                 pt.z = point.Z();
@@ -611,11 +630,11 @@ namespace gazebo {
         //     msg.points[i].offset_time = (float)interval / msg.points.size() * i * 10;
         // }
         msg.point_num = msg.points.size();
-        rosPointPub.publish(msg);
-        ros::spinOnce();
+
         if (scanPub && scanPub->HasConnections() && visualize) {
             scanPub->Publish(laserMsg);
         }
+        rosPointPub.publish(msg);
+        ros::spinOnce();
     }
-
-}  // namespace gazebo
+}

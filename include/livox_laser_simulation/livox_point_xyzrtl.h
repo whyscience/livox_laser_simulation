@@ -32,13 +32,13 @@ namespace pcl {
 }
 
 POINT_CLOUD_REGISTER_POINT_STRUCT (LivoxPointXyzrtlt,
-(float, x, x)
-(float, y, y)
-(float, z, z)
-(float, intensity, intensity)
-(std::uint8_t, tag, tag)
-(std::uint8_t, line, line)
-(double, timestamp, timestamp)
+                                   (float, x, x)
+                                           (float, y, y)
+                                           (float, z, z)
+                                           (float, intensity, intensity)
+                                           (std::uint8_t, tag, tag)
+                                           (std::uint8_t, line, line)
+                                           (double, timestamp, timestamp)
 )
 
 #endif

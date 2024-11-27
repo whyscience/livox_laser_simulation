@@ -12,39 +12,30 @@
 
 namespace gazebo {
     namespace physics {
-        class GZ_PHYSICS_VISIBLE LivoxOdeMultiRayShape
-
-                : public MultiRayShape {
+        class GZ_PHYSICS_VISIBLE LivoxOdeMultiRayShape : public MultiRayShape {
             /// \brief Constructor.
             /// \param[in] _parent Parent Collision.
         public:
-            explicit LivoxOdeMultiRayShape(CollisionPtr
-                                           _parent);
+            explicit LivoxOdeMultiRayShape(CollisionPtr _parent);
 
             /// \brief Destructor.
         public:
-            virtual ~
-
-            LivoxOdeMultiRayShape();
+            virtual ~LivoxOdeMultiRayShape();
 
             // Documentation inherited.
         public:
-
             virtual void UpdateRays();
 
         public:
-
             virtual void Init();
 
         public:
-
             std::vector<RayShapePtr> &RayShapes() { return rays; }
             /// \brief Ray-intersection callback.
             /// \param[in] _data Pointer to user data.
             /// \param[in] _o1 First geom to check for collisions.
             /// \param[in] _o2 Second geom to check for collisions.
         private:
-
             static void UpdateCallback(void *_data, dGeomID _o1,
                                        dGeomID _o2);
 

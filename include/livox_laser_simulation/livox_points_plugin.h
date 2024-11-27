@@ -18,12 +18,11 @@ namespace gazebo {
         uint8_t line;
     };
 
-
     class LivoxPointsPlugin : public RayPlugin {
     public:
         LivoxPointsPlugin();
 
-        virtual ~LivoxPointsPlugin();
+        ~LivoxPointsPlugin() override;
 
         void Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf);
 
@@ -32,51 +31,35 @@ namespace gazebo {
 
         ignition::math::Angle AngleMax() const;
 
-        double GetAngleResolution() const
-
-        GAZEBO_DEPRECATED(7.0);
+        double GetAngleResolution() const GAZEBO_DEPRECATED(7.0);
 
         double AngleResolution() const;
 
-        double GetRangeMin() const
-
-        GAZEBO_DEPRECATED(7.0);
+        double GetRangeMin() const GAZEBO_DEPRECATED(7.0);
 
         double RangeMin() const;
 
-        double GetRangeMax() const
-
-        GAZEBO_DEPRECATED(7.0);
+        double GetRangeMax() const GAZEBO_DEPRECATED(7.0);
 
         double RangeMax() const;
 
-        double GetRangeResolution() const
-
-        GAZEBO_DEPRECATED(7.0);
+        double GetRangeResolution() const GAZEBO_DEPRECATED(7.0);
 
         double RangeResolution() const;
 
-        int GetRayCount() const
-
-        GAZEBO_DEPRECATED(7.0);
+        int GetRayCount() const GAZEBO_DEPRECATED(7.0);
 
         int RayCount() const;
 
-        int GetRangeCount() const
-
-        GAZEBO_DEPRECATED(7.0);
+        int GetRangeCount() const GAZEBO_DEPRECATED(7.0);
 
         int RangeCount() const;
 
-        int GetVerticalRayCount() const
-
-        GAZEBO_DEPRECATED(7.0);
+        int GetVerticalRayCount() const GAZEBO_DEPRECATED(7.0);
 
         int VerticalRayCount() const;
 
-        int GetVerticalRangeCount() const
-
-        GAZEBO_DEPRECATED(7.0);
+        int GetVerticalRangeCount() const GAZEBO_DEPRECATED(7.0);
 
         int VerticalRangeCount() const;
 
@@ -84,9 +67,7 @@ namespace gazebo {
 
         ignition::math::Angle VerticalAngleMax() const;
 
-        double GetVerticalAngleResolution() const
-
-        GAZEBO_DEPRECATED(7.0);
+        double GetVerticalAngleResolution() const GAZEBO_DEPRECATED(7.0);
 
         double VerticalAngleResolution() const;
 
