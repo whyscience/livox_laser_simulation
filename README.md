@@ -45,7 +45,7 @@ To add the plugin to your robot model add the following lines to your sdf file c
   <visualize>true</visualize>
   <always_on>True</always_on>
   <update_rate>10</update_rate>
-  <!-- This ray plgin is only for visualization. -->
+  <!-- This ray plugin is only for visualization. -->
   <plugin name="gazebo_ros_laser_controller" filename="liblivox_laser_simulation.so">
     <ray>
       <scan>
